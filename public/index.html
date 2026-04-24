@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Move It Ride System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1> Move It Ride Booking System</h1>
+
+<h2>Register User</h2>
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Password">
+<button type="button" onclick="registerUser()">Register</button>
+
+<h2>Login</h2>
+<input id="loginEmail" placeholder="Email">
+<input id="loginPassword" placeholder="Password">
+<button type="button" onclick="loginUser()">Login</button>
+
+<hr>
+
+<h2>Register Rider</h2>
+<input id="riderName" placeholder="Name">
+<input id="motorcycle" placeholder="Motorcycle">
+<input id="plate" placeholder="Plate Number">
+<button type="button" onclick="registerRider()">Add Rider</button>
+
+<h2>All Riders</h2>
+<button onclick="loadRiders()">Load Riders</button>
+<ul id="riderList"></ul>
+
+<hr>
+
+<h2>Book Ride</h2>
+<input id="userId" placeholder="User ID">
+<input id="pickup" placeholder="Pickup">
+<input id="dropoff" placeholder="Dropoff">
+<button onclick="bookRide()">Book Ride</button>
+
+<hr>
+
+<h2>All Rides</h2>
+<button onclick="loadRides()">Load Rides</button>
+<ul id="rideList"></ul>
+
+<hr>
+
+<h2>Update Ride</h2>
+<input id="rideId" placeholder="Ride ID">
+<select id="status">
+    <option value="pending">Pending</option>
+    <option value="on-going">On-going</option>
+    <option value="completed">Completed</option>
+</select>
+<button onclick="updateRide()">Update</button>
+
+<h2>Cancel Ride</h2>
+<input id="cancelId" placeholder="Ride ID">
+<button onclick="cancelRide()">Cancel</button>
+
+<script>
+
+function registerUser() {
+    const nameVal = document.getElementById("name").value;
+    const emailVal = document.getElementById("email").value;
+    const passwordVal = document.getElementById("password").value;
+
+    if (!nameVal || !emailVal || !passwordVal) {
+        return alert("Fill all fields ❌");
+    }
+
+    fetch("/api/users/register", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            name: nameVal,
+            email: emailVal,
+            password: passwordVal
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        alert(data.message);
+
+       
+        document.getElementById("name").value = "";
+        document.getElementById("email").value = "";
+        document.getElementById("password").value = "";
+    });
+}
+
+
+function loginUser() {
+    const emailVal = document.getElementById("loginEmail").value;
+    const passwordVal = document.getElementById("loginPassword").value;
+
+    if (!emailVal || !passwordVal) {
+        return alert("Enter login details ❌");
+    }
+
+    fetch("/api/users/login", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            email: emailVal,
+            password: passwordVal
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        alert(data.message);
+
+        if(data.user){
+            document.getElementById("userId").value = data.user.id;
+        }
+    });
+}
+
+
+function registerRider() {
+    const nameVal = document.getElementById("riderName").value;
+    const motorVal = document.getElementById("motorcycle").value;
+    const plateVal = document.getElementById("plate").value;
+
+    if (!nameVal || !motorVal || !plateVal) {
+        return alert("Fill all rider fields ❌");
+    }
+
+    fetch("/api/riders", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            name: nameVal,
+            motorcycle: motorVal,
+            plateNumber: plateVal
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        alert(data.message);
+
+       
+        document.getElementById("riderName").value = "";
+        document.getElementById("motorcycle").value = "";
+        document.getElementById("plate").value = "";
+    });
+}
+
+
+function loadRiders() {
+    fetch("/api/riders")
+    .then(res=>res.json())
+    .then(data=>{
+        const list = document.getElementById("riderList");
+        list.innerHTML = "";
+
+        data.forEach(r=>{
+            const li = document.createElement("li");
+            li.textContent = `${r.name} | ${r.motorcycle} | Available: ${r.available}`;
+            list.appendChild(li);
+        });
+    });
+}
+
+
+function bookRide() {
+    const uid = document.getElementById("userId").value;
+    const pick = document.getElementById("pickup").value;
+    const drop = document.getElementById("dropoff").value;
+
+    if (!uid || !pick || !drop) {
+        return alert("Complete booking info ❌");
+    }
+
+    fetch("/api/rides", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            userId: uid,
+            pickup: pick,
+            dropoff: drop
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>alert(data.message));
+}
+
+function loadRides() {
+    fetch("/api/rides")
+    .then(res=>res.json())
+    .then(data=>{
+        const list = document.getElementById("rideList");
+        list.innerHTML = "";
+
+        data.forEach(r=>{
+            const li = document.createElement("li");
+            li.textContent = `ID:${r.id} | ${r.pickup} → ${r.dropoff} | ${r.status}`;
+            list.appendChild(li);
+        });
+    });
+}
+
+
+function updateRide() {
+    const id = document.getElementById("rideId").value;
+    const stat = document.getElementById("status").value;
+
+    if (!id) return alert("Enter Ride ID ❌");
+
+    fetch("/api/rides/"+id,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({status:stat})
+    })
+    .then(res=>res.json())
+    .then(data=>alert(data.message));
+}
+
+
+function cancelRide() {
+    const id = document.getElementById("cancelId").value;
+
+    if (!id) return alert("Enter Ride ID ❌");
+
+    fetch("/api/rides/"+id,{
+        method:"DELETE"
+    })
+    .then(res=>res.json())
+    .then(data=>alert(data.message));
+}
+</script>
+
+</body>
+</html>
